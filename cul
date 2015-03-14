@@ -1,0 +1,280 @@
+package javacalculator;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.lang.Math.*;
+
+public class JavaCalculator extends JFrame implements ActionListener
+{
+    private final int ADD = 10;
+    private final int SUB = 11;
+    private final int MUL = 12;
+    private final int DIV = 13;
+    private final int EQL = 14;
+    private final int CLR = 15;
+    private final int NEG = 16;
+    private final int ERR = -1;
+
+
+    private JTextField display; 
+    private int state = 0;
+    private double m0, m1;
+    private int op;
+
+
+    private JButton createButton(String tag)
+    {
+        JButton button = new JButton(tag);
+        button.setActionCommand(tag);
+        button.addActionListener(this);
+        return button;
+    }
+
+    public JavaCalculator()
+    {
+        display = new JTextField("0.0");
+        display.setHorizontalAlignment(JTextField.RIGHT);
+        display.setEditable(false);
+        display.setFont(new Font(display.getFont().getFontName(), display.getFont().getStyle(), 23));
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(6,6,3,3));
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+
+        panel.add(createButton("7"));
+        panel.add(createButton("8"));
+        panel.add(createButton("9"));
+        panel.add(createButton("+"));
+        panel.add(createButton("4"));
+        panel.add(createButton("5"));
+        panel.add(createButton("6"));
+        panel.add(createButton("-"));
+        panel.add(createButton("1"));
+        panel.add(createButton("2"));
+        panel.add(createButton("3"));
+        panel.add(createButton("*"));
+        panel.add(createButton("0"));
+        panel.add(createButton("="));
+        panel.add(createButton("C"));
+        panel.add(createButton("/"));
+        panel.add(createButton("%"));
+        panel.add(createButton("-/+"));
+
+        getContentPane().add(display, BorderLayout.NORTH);
+        getContentPane().add(panel, BorderLayout.CENTER);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("Badass Calculator");
+        setSize(300, 300);
+        setVisible(true);
+    }
+
+    /**************************************************************************************************/
+
+    private int convertEvent(ActionEvent event)
+    {
+        if(event.getActionCommand().equals("0"))
+            return 0;
+        if(event.getActionCommand().equals("1"))
+            return 1;
+        if(event.getActionCommand().equals("2"))
+            return 2;
+        if(event.getActionCommand().equals("3"))
+            return 3;
+        if(event.getActionCommand().equals("4"))
+            return 4;
+        if(event.getActionCommand().equals("5"))
+            return 5;
+        if(event.getActionCommand().equals("6"))
+            return 6;
+        if(event.getActionCommand().equals("7"))
+            return 7;
+        if(event.getActionCommand().equals("8"))
+            return 8;
+        if(event.getActionCommand().equals("9"))
+            return 9;
+        if(event.getActionCommand().equals("+"))
+            return ADD;
+        if(event.getActionCommand().equals("-"))
+            return SUB;
+        if(event.getActionCommand().equals("*"))
+            return MUL;
+        if(event.getActionCommand().equals("/"))
+            return DIV;
+        if(event.getActionCommand().equals("="))
+            return EQL;
+        if(event.getActionCommand().equals("C"))
+            return CLR;
+        if(event.getActionCommand().equals("%"))
+            return 0;
+        if(event.getActionCommand().equals("-/+"))
+            return NEG;
+
+
+        return ERR;
+    }
+
+    private boolean isNumber(int i)
+    {
+        return i >= 0 && i <= 9;
+    }
+
+    private boolean isOperation(int i)
+    {
+        switch(i)
+        {
+            case ADD:
+            case SUB:
+            case MUL:
+            case DIV: return true;
+        }
+        return false;
+    }
+
+    /***********************************************************************************************/
+
+    private void enterState0(int key)
+    {
+        state = 0;
+        m0 = 0;
+        display.setText(Double.toString(m0));
+
+    }
+
+    private void enterState1(int key)
+    {
+        state = 1;
+        m0 = m0 * 10 + key;
+        display.setText(Double.toString(m0));
+
+    }
+
+    private void enterState2(int key)
+    {
+        state = 2;
+        op = key;
+        m1 = 0;
+    }
+
+    private void enterState3(int key)
+    {
+        state = 3;
+        m1 = m1 * 10 + key;
+        display.setText(Double.toString(m1));
+
+    }
+
+    private void enterState4(int key)
+    {
+        state = 4;
+        switch(op)
+        {
+        case ADD: m1 = m0 + m1; break;
+        case SUB: m1 = m0 - m1; break;
+        case MUL: m1 = m0 * m1; break;
+        case DIV: m1 = m0 / m1; break;
+        }
+        display.setText(Double.toString(m1));
+        m0 = 0;
+    }
+
+    private void enterState5(int key)
+    {
+        state = 5;
+        switch(op)
+        {
+        case ADD: m0 = m0 + m1; break;
+        case SUB: m0 = m0 - m1; break;
+        case MUL: m0 = m0 * m1; break;
+        case DIV: m0 = m0 / m1; break;
+        }
+        display.setText(Double.toString(m0));
+        m1 = 0;
+        op = key;
+    }
+
+    private void enterState6(int key)
+    {
+        state = 6;
+
+        m0 = m0 * (-1);
+
+        display.setText(Double.toString(m0));
+        op = key;
+        m1 = 0;
+
+    }
+
+    public void actionPerformed(ActionEvent event)
+    {
+        int key = convertEvent(event);
+
+        switch(state)
+        {
+        case 0:
+            if(isNumber(key))
+                enterState1(key);
+            else if(key == NEG)
+                enterState6(key);
+            return;
+        //number    
+        case 1:
+            if(key == CLR)
+                enterState0(key);
+            else if(isNumber(key))
+                enterState1(key);
+            else if(isOperation(key))
+                enterState2(key);
+            else if(key == NEG)
+                enterState6(key);
+            return;
+        //operator  
+        case 2:
+            if(key == CLR)
+                enterState0(key);
+            else if(isNumber(key))
+                enterState3(key);
+            return;
+
+
+        //number
+        case 3:
+            if(key == CLR)
+                enterState0(key);
+            else if(isNumber(key))
+                enterState3(key);
+            else if(key == EQL)
+                enterState4(key);
+            else if(key == op)
+                enterState5(op);
+            else if(key == NEG)
+                enterState6(key);
+            return;
+        //equals    
+        case 4: 
+            if(key == CLR)
+                enterState0(key);
+            else if(isNumber(key))
+                enterState1(key);
+            else if(key == op)
+                enterState5(op);
+            return;
+        //equals + another number   
+        case 5:
+            if(key == CLR)
+                enterState0(key);
+            else if(isNumber(key))
+                enterState3(key);
+            else if(key == NEG)
+                enterState6(key);
+            return;
+        }
+    }
+
+    /************************************************************************************/
+
+    public static void main(String[] args)
+    {
+        new JavaCalculator();
+    }
+}
